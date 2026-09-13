@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>FPS Black Ops - Real Gameplay</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- افزودن GLTFLoader برای لود مدل دشمن -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="crosshair"></div>
+  <div id="flash"></div>
+  <div id="damage-overlay"></div>
+  <div id="invincible-overlay"></div>
+  <div id="status-toast">پیام</div>
+  <div id="respawn-banner">💀 نابود شدید!<br><span style="font-size:14px; margin-top:8px;">در حال بازگشت...</span></div>
+  
+  <div id="debug-console" class="minimized">
+    <div id="debug-header">🛠️ لاگ دیباگ (کلیک کنید)</div>
+    <div id="debug-content"></div>
+  </div>
+
+  <div id="crate-prompt">
+    <span>📦 جعبه هوایی رسید!</span>
+    <button id="btn-open-crate">🎁 باز کردن</button>
+  </div>
+
+  <div id="hud-size-slider-bar">
+    <span>تغییر اندازه:</span>
+    <input type="range" id="slider-btn-size" min="35" max="110" value="60">
+    <button id="btn-save-hud">💾 ذخیره</button>
+  </div>
+
+  <div id="hud">
+    <div id="btn-settings-gear">⚙️</div>
+    <div class="hud-chip hud-health-chip">
+      <span>❤️ <b id="player-hp">100</b></span><span class="hud-divider">|</span><span>🛡️ <b id="player-shield">قفل</b></span>
+    </div>
+    <div class="hud-chip hud-weapon-chip" id="weapon-switch-btn" title="تغییر اسلحه">
+      <span id="weapon-name-chip">🔫 M4</span><span class="hud-divider">|</span><span id="ammo-indicator">30/30</span>
+    </div>
+    <div class="hud-chip">
+      <span>💀 <b id="kills-total" style="color:#ef4444;">0</b></span><span class="hud-divider">|</span><span>⚡ <b id="killstreak-indicator" style="color:#eab308;">0</b></span>
+    </div>
+    <div class="hud-chip"><span>💣 <b id="grenade-indicator" style="color:#f97316;">5</b></span></div>
+    <div class="hud-chip hud-mini-chip" id="mp-chip">تک‌نفره</div>
+    <div class="hud-chip hud-jetpack-chip"><span>🚀</span><div id="fuel-bar-container"><div id="fuel-bar-fill"></div></div></div>
+  </div>
+
+  <div id="joystick-zone" class="hud-draggable"><div id="joystick-knob"></div></div>
+  <div id="touch-look-zone"></div>
+  
+  <div id="btn-shoot" class="hud-draggable btn-action">🔥</div>
+  <div id="btn-jump" class="hud-draggable btn-action">🦘</div>
+  <div id="btn-slide" class="hud-draggable btn-action">🏃</div>
+  <div id="btn-ads" class="hud-draggable btn-action">🎯</div>
+  <div id="btn-reload" class="hud-draggable btn-action">🔄</div>
+  <div id="btn-grenade" class="hud-draggable btn-action">💣</div>
+  <div id="btn-heal" class="hud-draggable btn-action">💉</div>
+  <div id="btn-hook" class="hud-draggable btn-action">🪝</div>
+  <div id="btn-call-crate" class="hud-draggable btn-action">📦</div>
+  <div id="btn-ability" class="hud-draggable btn-action">✨</div>
+
+  <div id="minecraft-hotbar">
+    <div class="hotbar-slot active" data-type="maze_wall"><span>🧱</span>دیوار</div>
+    <div class="hotbar-slot" data-type="board"><span>🛹</span>تخته</div>
+    <div class="hotbar-slot" data-type="cube"><span>📦</span>مکعب</div>
+  </div>
+  <div id="build-controls">
+    <div class="angle-btn" id="btn-angle-minus">➖</div>
+    <div id="angle-display" style="font-weight:bold; color:#38bdf8; min-width:45px; text-align:center;">0°</div>
+    <div class="angle-btn" id="btn-angle-plus">➕</div>
+  </div>
+  <div id="btn-place-block" class="btn-action">🔨</div>
+  <div id="btn-break-block" class="btn-action">⛏️</div>
+
+  <!-- FLOW MODALS -->
+  <div id="menu-modal" class="modal-overlay" style="display: flex;">
+    <div class="modal-box">
+      <h2 style="color: #38bdf8; margin-bottom: 12px;">🎮 نبرد اکشن سه‌بعدی</h2>
+      <button class="btn-primary btn-success" id="btn-start-flow-solo">👤 شروع تک‌نفره</button>
+      <button class="btn-primary" id="btn-start-flow-mp" style="background:#10b981;">🌐 چندنفره</button>
+    </div>
+  </div>
+
+  <div id="character-select-modal" class="modal-overlay">
+    <div class="modal-box selection-box">
+      <h3 style="color: #facc15;">🛡️ انتخاب کلاس مبارز</h3>
+      <div class="scroll-container" id="character-list-container"></div>
+      <button class="btn-primary btn-next" id="btn-confirm-character">تایید کاراکتر ➔</button>
+    </div>
+  </div>
+
+  <div id="weapon-select-modal" class="modal-overlay">
+    <div class="modal-box selection-box">
+      <h3 style="color: #f97316;">🔫 انتخاب سلاح اصلی</h3>
+      <div class="scroll-container" id="weapon-list-container"></div>
+      <button class="btn-primary btn-next" id="btn-confirm-weapon">تایید سلاح ➔</button>
+    </div>
+  </div>
+
+  <div id="map-select-modal" class="modal-overlay">
+    <div class="modal-box selection-box" style="max-width: 95%; width: 500px;">
+      <h3 style="color: #10b981;">🗺️ انتخاب نقشه</h3>
+      <div id="map-preview-container"></div>
+      <div class="scroll-container" id="map-list-container" style="height: 100px;"></div>
+      <button class="btn-primary btn-next" id="btn-confirm-map">🚀 شروع نبرد!</button>
+    </div>
+  </div>
+
+  <div id="mp-options-modal" class="modal-overlay">
+    <div class="modal-box">
+      <h3 style="color: #10b981;">🌐 اتصال چندنفره</h3>
+      <button class="btn-primary btn-success" id="btn-create-offer">ساخت اتاق (میزبان)</button>
+      <textarea id="host-offer-text" readonly placeholder="کد تولید شده..."></textarea>
+      <textarea id="host-answer-input" placeholder="کد جواب دوستتان"></textarea>
+      <button class="btn-primary" id="btn-confirm-host">تایید میزبان</button>
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
+      <textarea id="join-offer-input" placeholder="کد دوستتان (مهمان)"></textarea>
+      <button class="btn-primary btn-danger" id="btn-create-answer">تولید کد پاسخ</button>
+      <textarea id="join-answer-text" readonly placeholder="این کد را به دوستتان بدهید"></textarea>
+      <button class="btn-primary btn-next" id="btn-mp-proceed">ورود به بازی ➔</button>
+    </div>
+  </div>
+
+  <div id="gear-menu-modal" class="modal-overlay">
+    <div class="modal-box">
+      <h3 style="margin-bottom: 15px;">⚙️ تنظیمات</h3>
+      <button class="btn-primary" id="gear-btn-hud-edit" style="background:#8b5cf6;">📐 جابجایی دکمه‌ها</button>
+      <button class="btn-primary" id="gear-btn-mode">🛠️ حالت ساخت/مبارزه</button>
+      <button class="btn-primary btn-back-menu" style="background:#475569;">بازگشت به بازی</button>
+    </div>
+  </div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
