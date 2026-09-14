@@ -19,9 +19,7 @@ import {
 import { CHARACTERS_DB, setCharacter, selectedCharacter, updateCharacters } from './characters.js';
 import { MAPS_DB, startMapPreview, currentMapId } from './maps.js';
 
-// ==========================================
-// 🛠️ سیستم دیباگ ترمینال هوشمند درون بازی
-// ==========================================
+// لاگ هوشمند برای دیدن وضعیت در صفحه بازی
 const dbgConsole = document.getElementById('debug-console');
 const dbgContent = document.getElementById('debug-content');
 document.getElementById('debug-header')?.addEventListener('click', () => {
@@ -54,98 +52,108 @@ console.error = (...a) => { oErr(...a); logToDOM(a.map(x => typeof x === 'object
 window.addEventListener('error', e => logToDOM(`${e.message} at ${e.filename}:${e.lineno}`, 'err'));
 window.addEventListener('unhandledrejection', e => logToDOM(e.reason, 'err'));
 
-// ==========================================
-// مدیریت وضعیت و آغاز بازی
-// ==========================================
 let gameStarted = false; 
 let isMpFlow = false;
 export const getGameStarted = () => gameStarted;
+
+let activeCrate = null; 
+export const activeFlares = []; 
+
+// تعریف توابع فلر و دراپ قبل از مقداردهی اولیه کنترل‌ها
+export function spawnCarePackageAt(targetPos) {
+  const crateMesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xb45309 }));
+  crateMesh.position.set(targetPos.x, 45, targetPos.z); 
+  scene.add(crateMesh); 
+  activeCrate = { mesh: crateMesh, landed: false }; 
+  playSound(250, 0.8, 'sawtooth', 0.4); 
+}
+
+export function spawnAutoDrop() { 
+  spawnCarePackageAt(new THREE.Vector3(player.pos.x + (Math.random() - 0.5) * 8, 45, player.pos.z + (Math.random() - 0.5) * 8)); 
+}
+
+export function throwCarePackageFlare() {
+  const flare = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8), new THREE.MeshStandardMaterial({color: 0xef4444, emissive: 0xff0000}));
+  flare.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1.0));
+  scene.add(flare);
+  const vel = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(15); 
+  vel.y += 5;
+  activeFlares.push({ mesh: flare, vel: vel, timer: 2.5, landed: false }); 
+  playSound(350, 0.2, 'sine', 0.4); 
+  showToast('🔴 فلر پرتاب شد!', '#ef4444');
+}
 
 setAutoDropCallback(spawnAutoDrop);
 initEngine(); 
 initControls(getGameStarted, throwCarePackageFlare); 
 initBuilder();
 
-let activeCrate = null; 
-export const activeFlares = []; 
-
-export function throwCarePackageFlare() {
-  const flare = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8), new THREE.MeshStandardMaterial({color: 0xef4444, emissive: 0xff0000}));
-  flare.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1.0));
-  scene.add(flare);
-  const vel = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(15); vel.y += 5;
-  activeFlares.push({ mesh: flare, vel: vel, timer: 2.5, landed: false }); playSound(350, 0.2, 'sine', 0.4); showToast('🔴 فلر پرتاب شد!', '#ef4444');
-}
-
-export function spawnAutoDrop() { 
-  spawnCarePackageAt(new THREE.Vector3(player.pos.x + (Math.random()-0.5)*8, 45, player.pos.z + (Math.random()-0.5)*8)); 
-}
-
-function spawnCarePackageAt(targetPos) {
-  const crateMesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xb45309 }));
-  crateMesh.position.set(targetPos.x, 45, targetPos.z); scene.add(crateMesh); activeCrate = { mesh: crateMesh, landed: false }; playSound(250, 0.8, 'sawtooth', 0.4); 
-}
-
 document.getElementById('btn-open-crate')?.addEventListener('click', () => {
   if (!activeCrate) return; 
-  scene.remove(activeCrate.mesh); activeCrate = null; document.getElementById('crate-prompt').style.display = 'none'; playSound(800, 0.4, 'triangle', 0.5);
+  scene.remove(activeCrate.mesh); 
+  activeCrate = null; 
+  document.getElementById('crate-prompt').style.display = 'none'; 
+  playSound(800, 0.4, 'triangle', 0.5);
   const chosen = ['invincible', 'fire_ammo', 'allies', 'golden_mag'][Math.floor(Math.random() * 4)];
-  if (chosen === 'invincible') { player.invincibleTimer = 20; showToast('🌿 آیتم جان‌سخت: ۲۰ ثانیه آسیب‌ناپذیری!', '#10b981'); } 
-  else if (chosen === 'fire_ammo') { addFireBullets(5); showToast('🔥 آیتم تیر آتشین: ۵ تیر!', '#ef4444'); } 
-  else if (chosen === 'allies') { spawnAlliedSoldiers(); } 
-  else { activateGoldenMag(45); showToast('⚜ خشاب طلایی!', '#facc15'); }
+  if (chosen === 'invincible') { 
+    player.invincibleTimer = 20; 
+    showToast('🌿 آیتم جان‌سخت: ۲۰ ثانیه آسیب‌ناپذیری!', '#10b981'); 
+  } else if (chosen === 'fire_ammo') { 
+    addFireBullets(5); 
+    showToast('🔥 آیتم تیر آتشین: ۵ تیر!', '#ef4444'); 
+  } else if (chosen === 'allies') { 
+    spawnAlliedSoldiers(); 
+  } else { 
+    activateGoldenMag(45); 
+    showToast('⚜ خشاب طلایی!', '#facc15'); 
+  }
 });
 
 function hideAllModals() { 
   document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
 }
 
-// گوش دادن ایمن و سریع به کلیک و لمس روی موبایل
-function addSafeClick(id, handler) {
+function bindSafeClick(id, handler) {
   const el = document.getElementById(id);
   if (!el) return;
-  const execute = (e) => {
+  const cb = (e) => {
     e.preventDefault();
     e.stopPropagation();
     handler(e);
   };
-  el.addEventListener('pointerdown', execute);
-  el.addEventListener('click', execute);
+  el.addEventListener('pointerdown', cb);
+  el.addEventListener('click', cb);
 }
 
-// ۱. شروع تک‌نفره
-addSafeClick('btn-start-flow-solo', () => { 
+// دکمه‌های صفحه ورودی اولیه
+bindSafeClick('btn-start-flow-solo', () => { 
   isMpFlow = false; 
   openCharacterSelect(); 
 });
 
-// ۲. شروع چندنفره
-addSafeClick('btn-start-flow-mp', () => { 
+bindSafeClick('btn-start-flow-mp', () => { 
   isMpFlow = true; 
   hideAllModals(); 
   document.getElementById('mp-options-modal').style.display = 'flex'; 
 });
 
-// ۳. ایجاد اتاق هاست
-addSafeClick('btn-create-offer', () => {
+// دکمه‌های شبکه / چندنفره
+bindSafeClick('btn-create-offer', () => {
   createHostOffer();
 });
 
-// ۴. تایید اتصال هاست
-addSafeClick('btn-confirm-host', async () => { 
+bindSafeClick('btn-confirm-host', async () => { 
   await connectHost(); 
   openCharacterSelect(); 
 });
 
-// ۵. تولید پاسخ کلاینت (مهمان)
-addSafeClick('btn-create-answer', () => { 
+bindSafeClick('btn-create-answer', () => { 
   createJoinAnswer(() => {
     openCharacterSelect();
   }); 
 });
 
-// ۶. ورود کلاینت به انتخاب کاراکتر
-addSafeClick('btn-mp-proceed', () => {
+bindSafeClick('btn-mp-proceed', () => {
   openCharacterSelect();
 });
 
@@ -180,7 +188,7 @@ function openCharacterSelect() {
   }
 }
 
-addSafeClick('btn-confirm-character', openWeaponSelect);
+bindSafeClick('btn-confirm-character', openWeaponSelect);
 
 let chosenWeaponId = 'rifle'; 
 function openWeaponSelect() {
@@ -213,8 +221,7 @@ function openWeaponSelect() {
   }
 }
 
-addSafeClick('btn-confirm-weapon', () => {
-  // اگر در حالت چندنفره مهمان هستیم، منتظر مپ انتخاب شده هاست می‌مانیم
+bindSafeClick('btn-confirm-weapon', () => {
   if (isMpFlow && !isHost) {
     startGameSession();
   } else {
@@ -258,7 +265,6 @@ function startGameSession() {
   hideAllModals();
   initWorld(chosenMapId); 
   
-  // اسپاون در موقعیت درست
   if (MAPS_DB[chosenMapId] && MAPS_DB[chosenMapId].spawns) {
     const spIdx = (isMultiplayer && !isHost) ? 1 : 0;
     player.pos.copy(MAPS_DB[chosenMapId].spawns[spIdx] || MAPS_DB[chosenMapId].spawns[0]); 
@@ -271,7 +277,6 @@ function startGameSession() {
   if (!isMultiplayer) {
     spawnEnemies();
   } else if (isHost) {
-    // ارسال اطلاعات هماهنگی اولیه به مهمان
     sendNetworkData({
       t: 'init',
       map: chosenMapId,
@@ -285,12 +290,31 @@ function startGameSession() {
   showToast(`نبرد در نقشه ${MAPS_DB[chosenMapId]?.name || chosenMapId} آغاز شد!`, '#10b981');
 }
 
-addSafeClick('btn-confirm-map', startGameSession);
+bindSafeClick('btn-confirm-map', startGameSession);
 
-addSafeClick('btn-settings-gear', () => { gameStarted = false; document.getElementById('gear-menu-modal').style.display = 'flex'; });
-addSafeClick('gear-btn-hud-edit', () => { document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; toggleHudEdit(true); });
-addSafeClick('gear-btn-mode', () => { toggleBuildMode(); document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; });
-document.querySelectorAll('.btn-back-menu').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); gameStarted = true; }));
+bindSafeClick('btn-settings-gear', () => { 
+  gameStarted = false; 
+  document.getElementById('gear-menu-modal').style.display = 'flex'; 
+});
+
+bindSafeClick('gear-btn-hud-edit', () => { 
+  document.getElementById('gear-menu-modal').style.display = 'none'; 
+  gameStarted = true; 
+  toggleHudEdit(true); 
+});
+
+bindSafeClick('gear-btn-mode', () => { 
+  toggleBuildMode(); 
+  document.getElementById('gear-menu-modal').style.display = 'none'; 
+  gameStarted = true; 
+});
+
+document.querySelectorAll('.btn-back-menu').forEach(btn => {
+  btn.addEventListener('click', () => { 
+    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
+    gameStarted = true; 
+  });
+});
 
 const clock = new THREE.Clock(); 
 let netTimer = 0;
@@ -368,4 +392,3 @@ function animate() {
 }
 
 animate();
-              
