@@ -19,7 +19,6 @@ import {
 import { CHARACTERS_DB, setCharacter, selectedCharacter, updateCharacters } from './characters.js';
 import { MAPS_DB, startMapPreview, currentMapId } from './maps.js';
 
-// ترمینال دیباگ روی تصویر
 const dbgConsole = document.getElementById('debug-console');
 const dbgContent = document.getElementById('debug-content');
 document.getElementById('debug-header')?.addEventListener('click', () => {
@@ -59,7 +58,6 @@ export const getGameStarted = () => gameStarted;
 let activeCrate = null; 
 export const activeFlares = []; 
 
-// تعریف صحیح توابع قبل از پاس دادن به ماژول‌های کنترل
 export function spawnCarePackageAt(targetPos) {
   const crateMesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xb45309 }));
   crateMesh.position.set(targetPos.x, 45, targetPos.z); 
@@ -123,7 +121,6 @@ function enableGameControls() {
   document.querySelectorAll('.hud-draggable').forEach(el => el.style.pointerEvents = 'auto');
 }
 
-// ثبت رویداد با ایمنی لمس روی صفحات موبایل
 function addSafeClick(id, handler) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -136,7 +133,7 @@ function addSafeClick(id, handler) {
   el.addEventListener('click', cb);
 }
 
-// منوی اصلی
+// دکمه‌های منوی اولیه
 addSafeClick('btn-start-flow-solo', () => { 
   isMpFlow = false; 
   openCharacterSelect(); 
@@ -148,7 +145,7 @@ addSafeClick('btn-start-flow-mp', () => {
   document.getElementById('mp-options-modal').style.display = 'flex'; 
 });
 
-// منوی شبکه
+// دکمه‌های چندنفره
 addSafeClick('btn-create-offer', () => {
   createHostOffer();
 });
@@ -404,4 +401,4 @@ function animate() {
 }
 
 animate();
-      
+                       
