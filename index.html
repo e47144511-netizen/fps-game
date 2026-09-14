@@ -8,29 +8,69 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <style>
+    /* ایزوله‌سازی کامل لایه‌های منو جهت جلوگیری از قفل شدن تاچ */
     .modal-overlay {
-      display: flex;
+      display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.88);
-      z-index: 99999;
+      background: rgba(5, 10, 20, 0.94);
+      z-index: 999999 !important;
       align-items: center;
       justify-content: center;
       pointer-events: auto !important;
     }
     .modal-box {
+      width: 90%;
+      max-width: 380px;
+      background: #0f172a;
+      border: 2px solid #38bdf8;
+      border-radius: 16px;
+      padding: 20px;
+      color: white;
+      text-align: center;
       pointer-events: auto !important;
       position: relative;
-      z-index: 100000;
+      z-index: 1000000 !important;
     }
     .btn-primary {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
       cursor: pointer !important;
+      color: white;
       pointer-events: auto !important;
-      touch-action: manipulation !important;
+      touch-action: manipulation;
+    }
+    .btn-success { background: #10b981; }
+    .btn-blue { background: #0284c7; }
+    #err-popup {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      background: #dc2626;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      z-index: 9999999;
+      direction: ltr;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
+  <!-- جعبه ره‌گیری و نمایش خطاهای سیستمی جاوااسکریپت -->
+  <div id="err-popup"></div>
+
   <div id="canvas-container"></div>
   <div id="crosshair"></div>
   <div id="flash"></div>
@@ -38,22 +78,6 @@
   <div id="invincible-overlay"></div>
   <div id="status-toast">پیام</div>
   <div id="respawn-banner">💀 نابود شدید!<br><span style="font-size:14px; margin-top:8px;">در حال بازگشت...</span></div>
-  
-  <div id="debug-console" class="minimized">
-    <div id="debug-header">🛠️ لاگ دیباگ (کلیک کنید)</div>
-    <div id="debug-content"></div>
-  </div>
-
-  <div id="crate-prompt">
-    <span>📦 جعبه هوایی رسید!</span>
-    <button id="btn-open-crate">🎁 باز کردن</button>
-  </div>
-
-  <div id="hud-size-slider-bar">
-    <span>تغییر اندازه:</span>
-    <input type="range" id="slider-btn-size" min="35" max="110" value="60">
-    <button id="btn-save-hud">💾 ذخیره</button>
-  </div>
 
   <div id="hud">
     <div id="btn-settings-gear">⚙️</div>
@@ -85,29 +109,17 @@
   <div id="btn-call-crate" class="hud-draggable btn-action">📦</div>
   <div id="btn-ability" class="hud-draggable btn-action">✨</div>
 
-  <div id="minecraft-hotbar">
-    <div class="hotbar-slot active" data-type="maze_wall"><span>🧱</span>دیوار</div>
-    <div class="hotbar-slot" data-type="board"><span>🛹</span>تخته</div>
-    <div class="hotbar-slot" data-type="cube"><span>📦</span>مکعب</div>
-  </div>
-  <div id="build-controls">
-    <div class="angle-btn" id="btn-angle-minus">➖</div>
-    <div id="angle-display" style="font-weight:bold; color:#38bdf8; min-width:45px; text-align:center;">0°</div>
-    <div class="angle-btn" id="btn-angle-plus">➕</div>
-  </div>
-  <div id="btn-place-block" class="btn-action">🔨</div>
-  <div id="btn-break-block" class="btn-action">⛏️</div>
-
-  <!-- منوهای مدال بازی -->
-  <div id="menu-modal" class="modal-overlay">
+  <!-- مودال ۱: منوی اصلی ورود -->
+  <div id="menu-modal" class="modal-overlay" style="display: flex;">
     <div class="modal-box">
       <h2 style="color: #38bdf8; margin-bottom: 15px;">🎮 نبرد اکشن سه‌بعدی</h2>
       <button class="btn-primary btn-success" id="btn-start-flow-solo">👤 شروع تک‌نفره</button>
-      <button class="btn-primary" id="btn-start-flow-mp" style="background:#10b981;">🌐 چندنفره</button>
+      <button class="btn-primary btn-blue" id="btn-start-flow-mp">🌐 چندنفره</button>
     </div>
   </div>
 
-  <div id="character-select-modal" class="modal-overlay" style="display: none;">
+  <!-- مودال ۲: انتخاب کاراکتر -->
+  <div id="character-select-modal" class="modal-overlay">
     <div class="modal-box selection-box">
       <h3 style="color: #facc15; margin-bottom: 8px;">🛡️ انتخاب کلاس مبارز</h3>
       <div class="scroll-container" id="character-list-container"></div>
@@ -115,7 +127,8 @@
     </div>
   </div>
 
-  <div id="weapon-select-modal" class="modal-overlay" style="display: none;">
+  <!-- مودال ۳: انتخاب اسلحه -->
+  <div id="weapon-select-modal" class="modal-overlay">
     <div class="modal-box selection-box">
       <h3 style="color: #f97316; margin-bottom: 8px;">🔫 انتخاب سلاح اصلی</h3>
       <div class="scroll-container" id="weapon-list-container"></div>
@@ -123,7 +136,8 @@
     </div>
   </div>
 
-  <div id="map-select-modal" class="modal-overlay" style="display: none;">
+  <!-- مودال ۴: انتخاب نقشه -->
+  <div id="map-select-modal" class="modal-overlay">
     <div class="modal-box selection-box" style="max-width: 95%; width: 480px;">
       <h3 style="color: #10b981; margin-bottom: 8px;">🗺️ انتخاب نقشه</h3>
       <div id="map-preview-container"></div>
@@ -132,7 +146,8 @@
     </div>
   </div>
 
-  <div id="mp-options-modal" class="modal-overlay" style="display: none;">
+  <!-- مودال ۵: اتصال چندنفره -->
+  <div id="mp-options-modal" class="modal-overlay">
     <div class="modal-box">
       <h3 style="color: #10b981;">🌐 اتصال چندنفره WebRTC</h3>
       <button class="btn-primary btn-success" id="btn-create-offer">ساخت اتاق (میزبان)</button>
@@ -141,27 +156,59 @@
       <button class="btn-primary" id="btn-confirm-host">تایید و اتصال میزبان</button>
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.15); margin: 10px 0;">
       <textarea id="join-offer-input" placeholder="کد اتاق میزبان را اینجا پیست کنید"></textarea>
-      <button class="btn-primary btn-danger" id="btn-create-answer">تولید کد پاسخ (مهمان)</button>
+      <button class="btn-primary" style="background:#ef4444;" id="btn-create-answer">تولید کد پاسخ (مهمان)</button>
       <textarea id="join-answer-text" readonly placeholder="کد تولید شده را به میزبان بفرستید"></textarea>
       <button class="btn-primary btn-next" id="btn-mp-proceed">ورود به مرحله بعد ➔</button>
     </div>
   </div>
 
-  <div id="gear-menu-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-box">
-      <h3 style="margin-bottom: 15px;">⚙️ تنظیمات نبرد</h3>
-      <button class="btn-primary" id="gear-btn-hud-edit" style="background:#8b5cf6;">📐 جابجایی دکمه‌ها</button>
-      <button class="btn-primary" id="gear-btn-mode">🛠️ حالت ساخت/مبارزه</button>
-      <button class="btn-primary btn-back-menu" style="background:#475569;">بازگشت به بازی</button>
-    </div>
-  </div>
-
+  <!-- ثبت و نمایش بلادرنگ خطاهای پنهان ماژول‌ها -->
   <script>
-    // نمایش مستقیم خطا در صورت بروز مشکل در ماژول‌ها
+    function showErr(msg) {
+      var box = document.getElementById('err-popup');
+      if (box) {
+        box.style.display = 'block';
+        box.textContent = "🛑 خطای سیستم:\n" + msg;
+      }
+    }
     window.addEventListener('error', function(e) {
-      alert("خطای جاوااسکریپت:\n" + e.message + "\nدر: " + e.filename + ":" + e.lineno);
+      showErr((e.message || 'Error') + '\nFile: ' + (e.filename || '') + '\nLine: ' + (e.lineno || ''));
+    }, true);
+    window.addEventListener('unhandledrejection', function(e) {
+      showErr('Promise Rejection: ' + e.reason);
     });
   </script>
+
+  <!-- کنترل مستقیم کلیک دکمه‌های منو -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var soloBtn = document.getElementById('btn-start-flow-solo');
+      var mpBtn = document.getElementById('btn-start-flow-mp');
+      var menuModal = document.getElementById('menu-modal');
+
+      function hideMenu() {
+        if (menuModal) menuModal.style.display = 'none';
+      }
+
+      function attachTrigger(el, targetModalId) {
+        if (!el) return;
+        var act = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          hideMenu();
+          var target = document.getElementById(targetModalId);
+          if (target) target.style.display = 'flex';
+        };
+        el.addEventListener('pointerdown', act);
+        el.addEventListener('click', act);
+      }
+
+      attachTrigger(soloBtn, 'character-select-modal');
+      attachTrigger(mpBtn, 'mp-options-modal');
+    });
+  </script>
+
   <script type="module" src="./main.js"></script>
 </body>
-</html>
+                                                                                                                 </html>
+  
