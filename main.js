@@ -19,7 +19,9 @@ import {
 import { CHARACTERS_DB, setCharacter, selectedCharacter, updateCharacters } from './characters.js';
 import { MAPS_DB, startMapPreview, currentMapId } from './maps.js';
 
-// ترمینال دیباگ روی صفحه
+// ==========================================
+// 🛠️ سیستم دیباگ ترمینال هوشمند درون بازی
+// ==========================================
 const dbgConsole = document.getElementById('debug-console');
 const dbgContent = document.getElementById('debug-content');
 document.getElementById('debug-header')?.addEventListener('click', () => {
@@ -28,16 +30,23 @@ document.getElementById('debug-header')?.addEventListener('click', () => {
     dbgConsole.classList.toggle('expanded');
   }
 });
-function safeStringify(obj) { try { return JSON.stringify(obj); } catch(e) { return String(obj); } }
+
+function safeStringify(obj) { 
+  try { return JSON.stringify(obj); } catch(e) { return String(obj); } 
+}
+
 function logToDOM(msg, type) {
   if (!dbgContent) return;
   const el = document.createElement('div');
-  el.style.marginBottom = '6px'; el.style.borderBottom = '1px solid rgba(255,255,255,0.1)'; el.style.paddingBottom = '4px';
+  el.style.marginBottom = '6px'; 
+  el.style.borderBottom = '1px solid rgba(255,255,255,0.1)'; 
+  el.style.paddingBottom = '4px';
   el.style.color = type === 'err' ? '#ef4444' : (type === 'warn' ? '#facc15' : '#38bdf8');
   el.textContent = `[${type.toUpperCase()}] ${msg}`;
   dbgContent.appendChild(el);
   dbgContent.scrollTop = dbgContent.scrollHeight;
 }
+
 const oLog = console.log, oWarn = console.warn, oErr = console.error;
 console.log = (...a) => { oLog(...a); logToDOM(a.map(x => typeof x === 'object' ? safeStringify(x) : x).join(' '), 'log'); };
 console.warn = (...a) => { oWarn(...a); logToDOM(a.map(x => typeof x === 'object' ? safeStringify(x) : x).join(' '), 'warn'); };
@@ -45,12 +54,14 @@ console.error = (...a) => { oErr(...a); logToDOM(a.map(x => typeof x === 'object
 window.addEventListener('error', e => logToDOM(`${e.message} at ${e.filename}:${e.lineno}`, 'err'));
 window.addEventListener('unhandledrejection', e => logToDOM(e.reason, 'err'));
 
+// ==========================================
+// مدیریت وضعیت و آغاز بازی
+// ==========================================
 let gameStarted = false; 
 let isMpFlow = false;
 export const getGameStarted = () => gameStarted;
 
 setAutoDropCallback(spawnAutoDrop);
-
 initEngine(); 
 initControls(getGameStarted, throwCarePackageFlare); 
 initBuilder();
@@ -89,62 +100,52 @@ function hideAllModals() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
 }
 
-function bindClick(id, handler) {
+// گوش دادن ایمن و سریع به کلیک و لمس روی موبایل
+function addSafeClick(id, handler) {
   const el = document.getElementById(id);
   if (!el) return;
-  const cb = (e) => {
+  const execute = (e) => {
     e.preventDefault();
     e.stopPropagation();
     handler(e);
   };
-  el.addEventListener('click', cb);
-  el.addEventListener('touchend', cb);
+  el.addEventListener('pointerdown', execute);
+  el.addEventListener('click', execute);
 }
 
-function enableGameControls() {
-  const lookZone = document.getElementById('touch-look-zone');
-  const joyZone = document.getElementById('joystick-zone');
-  const canvas = document.getElementById('canvas-container');
-  if (lookZone) lookZone.style.pointerEvents = 'auto';
-  if (joyZone) joyZone.style.pointerEvents = 'auto';
-  if (canvas) canvas.style.pointerEvents = 'auto';
-  document.querySelectorAll('.hud-draggable').forEach(el => el.style.pointerEvents = 'auto');
-}
-
-// ۱. کلیک تک‌نفره
-bindClick('btn-start-flow-solo', () => { 
+// ۱. شروع تک‌نفره
+addSafeClick('btn-start-flow-solo', () => { 
   isMpFlow = false; 
   openCharacterSelect(); 
 });
 
-// ۲. کلیک چندنفره
-bindClick('btn-start-flow-mp', () => { 
+// ۲. شروع چندنفره
+addSafeClick('btn-start-flow-mp', () => { 
   isMpFlow = true; 
   hideAllModals(); 
   document.getElementById('mp-options-modal').style.display = 'flex'; 
 });
 
-// ۳. ایجاد اتاق میزبان
-bindClick('btn-create-offer', () => {
+// ۳. ایجاد اتاق هاست
+addSafeClick('btn-create-offer', () => {
   createHostOffer();
 });
 
-// ۴. ثبت و اتصال میزبان
-bindClick('btn-confirm-host', async () => { 
+// ۴. تایید اتصال هاست
+addSafeClick('btn-confirm-host', async () => { 
   await connectHost(); 
   openCharacterSelect(); 
 });
 
-// ۵. تولید پاسخ مهمان
-bindClick('btn-create-answer', () => { 
+// ۵. تولید پاسخ کلاینت (مهمان)
+addSafeClick('btn-create-answer', () => { 
   createJoinAnswer(() => {
-    // پس از ایجاد کانال داده، مستقیماً وارد انتخاب کاراکتر می‌شود
     openCharacterSelect();
   }); 
 });
 
-// ۶. دکمه ادامه به بازی برای مهمان
-bindClick('btn-mp-proceed', () => {
+// ۶. ورود کلاینت به انتخاب کاراکتر
+addSafeClick('btn-mp-proceed', () => {
   openCharacterSelect();
 });
 
@@ -160,15 +161,15 @@ function openCharacterSelect() {
     d.className = 'select-card'; 
     d.innerHTML = `<div class="card-icon">${char.icon}</div><div class="card-title" style="color: ${char.color};">${char.name}</div><div class="card-desc">${char.desc}</div>`;
     
-    const onSelect = (e) => { 
+    const pick = (e) => { 
       e.stopPropagation();
       document.querySelectorAll('#character-list-container .select-card').forEach(x => x.classList.remove('selected')); 
       d.classList.add('selected'); 
       chosenCharId = char.id;
       setCharacter(char.id);
     };
-    d.addEventListener('click', onSelect);
-    d.addEventListener('touchend', onSelect);
+    d.addEventListener('pointerdown', pick);
+    d.addEventListener('click', pick);
     c.appendChild(d);
   });
   
@@ -179,7 +180,7 @@ function openCharacterSelect() {
   }
 }
 
-bindClick('btn-confirm-character', openWeaponSelect);
+addSafeClick('btn-confirm-character', openWeaponSelect);
 
 let chosenWeaponId = 'rifle'; 
 function openWeaponSelect() {
@@ -193,15 +194,15 @@ function openWeaponSelect() {
     d.className = 'select-card'; 
     d.innerHTML = `<div class="card-title" style="color: #f97316;">${wpn.name}</div><div class="card-desc">Dmg: ${wpn.damage}<br>Mag: ${wpn.magSize}<br>Type: ${wpn.id}</div>`;
     
-    const onSelect = (e) => { 
+    const pick = (e) => { 
       e.stopPropagation();
       document.querySelectorAll('#weapon-list-container .select-card').forEach(x => x.classList.remove('selected')); 
       d.classList.add('selected'); 
       chosenWeaponId = wpn.id;
       setWeapon(wpn.id);
     };
-    d.addEventListener('click', onSelect);
-    d.addEventListener('touchend', onSelect);
+    d.addEventListener('pointerdown', pick);
+    d.addEventListener('click', pick);
     c.appendChild(d);
   });
   
@@ -212,10 +213,10 @@ function openWeaponSelect() {
   }
 }
 
-bindClick('btn-confirm-weapon', () => {
-  // اگر مهمان هستیم، نقشه را هاست مشخص کرده است و مستقیماً وارد بازی می‌شویم
+addSafeClick('btn-confirm-weapon', () => {
+  // اگر در حالت چندنفره مهمان هستیم، منتظر مپ انتخاب شده هاست می‌مانیم
   if (isMpFlow && !isHost) {
-    launchGame();
+    startGameSession();
   } else {
     openMapSelect();
   }
@@ -234,15 +235,15 @@ function openMapSelect() {
     d.style.flex = '0 0 120px'; 
     d.innerHTML = `<div class="card-title" style="color: #10b981;">${map.name}</div>`;
     
-    const onSelect = (e) => { 
+    const pick = (e) => { 
       e.stopPropagation();
       document.querySelectorAll('#map-list-container .select-card').forEach(x => x.classList.remove('selected')); 
       d.classList.add('selected'); 
       chosenMapId = map.id;
       startMapPreview(map.id); 
     };
-    d.addEventListener('click', onSelect);
-    d.addEventListener('touchend', onSelect);
+    d.addEventListener('pointerdown', pick);
+    d.addEventListener('click', pick);
     c.appendChild(d);
   });
   
@@ -253,36 +254,42 @@ function openMapSelect() {
   }
 }
 
-function launchGame() {
+function startGameSession() {
   hideAllModals();
-  enableGameControls();
   initWorld(chosenMapId); 
   
-  // اسپاون در موقعیت صحیح
+  // اسپاون در موقعیت درست
   if (MAPS_DB[chosenMapId] && MAPS_DB[chosenMapId].spawns) {
-    const spawnIndex = (isMultiplayer && !isHost) ? 1 : 0;
-    player.pos.copy(MAPS_DB[chosenMapId].spawns[spawnIndex] || MAPS_DB[chosenMapId].spawns[0]); 
+    const spIdx = (isMultiplayer && !isHost) ? 1 : 0;
+    player.pos.copy(MAPS_DB[chosenMapId].spawns[spIdx] || MAPS_DB[chosenMapId].spawns[0]); 
   }
 
   if (selectedCharacter && selectedCharacter.id === 'speedster') { 
     player.baseSpeedMultiplier = 2.5; 
   }
   
-  // در حالت تک‌نفره دشمنان هوش مصنوعی اسپاون شوند
   if (!isMultiplayer) {
     spawnEnemies();
+  } else if (isHost) {
+    // ارسال اطلاعات هماهنگی اولیه به مهمان
+    sendNetworkData({
+      t: 'init',
+      map: chosenMapId,
+      hostSpawnIndex: 0,
+      guestSpawnIndex: 1
+    });
   }
 
   gameStarted = true; 
-  console.log("GAME STARTED SUCCESSFULLY. MAP:", MAPS_DB[chosenMapId].name);
-  showToast(`نبرد در مپ ${MAPS_DB[chosenMapId].name} آغاز شد!`, '#10b981');
+  console.log("GAME STARTED. MAP:", MAPS_DB[chosenMapId]?.name || chosenMapId);
+  showToast(`نبرد در نقشه ${MAPS_DB[chosenMapId]?.name || chosenMapId} آغاز شد!`, '#10b981');
 }
 
-bindClick('btn-confirm-map', launchGame);
+addSafeClick('btn-confirm-map', startGameSession);
 
-bindClick('btn-settings-gear', () => { gameStarted = false; document.getElementById('gear-menu-modal').style.display = 'flex'; });
-bindClick('gear-btn-hud-edit', () => { document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; toggleHudEdit(true); });
-bindClick('gear-btn-mode', () => { toggleBuildMode(); document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; });
+addSafeClick('btn-settings-gear', () => { gameStarted = false; document.getElementById('gear-menu-modal').style.display = 'flex'; });
+addSafeClick('gear-btn-hud-edit', () => { document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; toggleHudEdit(true); });
+addSafeClick('gear-btn-mode', () => { toggleBuildMode(); document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; });
 document.querySelectorAll('.btn-back-menu').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); gameStarted = true; }));
 
 const clock = new THREE.Clock(); 
@@ -307,7 +314,6 @@ function animate() {
   updateBuilder(); 
   updateNetwork(dt);
 
-  // ارسال دائمی موقعیت برای طرف مقابل در شبکه با نرخ ۲۰ بار در ثانیه
   if (isMultiplayer) { 
     netTimer += dt; 
     if (netTimer > 0.05) { 
@@ -362,4 +368,4 @@ function animate() {
 }
 
 animate();
-                                                                            
+              
