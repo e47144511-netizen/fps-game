@@ -79,36 +79,49 @@ function hideAllModals() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
 }
 
-// گوش‌دادن به pointerdown برای پاسخگویی سریع‌تر دکمه‌ها روی موبایل
-function addTouchClick(id, handler) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('pointerdown', (e) => {
+// متصل کردن رویدادها با پشتیبانی کامل از تاچ موبایل
+function bindBtn(id, callback) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const handler = (e) => {
+    e.preventDefault();
     e.stopPropagation();
-    handler(e);
-  });
+    callback();
+  };
+  btn.addEventListener('click', handler);
+  btn.addEventListener('touchend', handler);
 }
 
-addTouchClick('btn-start-flow-solo', () => { 
+function activateGameplayInput() {
+  const lookZone = document.getElementById('touch-look-zone');
+  const joyZone = document.getElementById('joystick-zone');
+  const canvasContainer = document.getElementById('canvas-container');
+  if (lookZone) lookZone.style.pointerEvents = 'auto';
+  if (joyZone) joyZone.style.pointerEvents = 'auto';
+  if (canvasContainer) canvasContainer.style.pointerEvents = 'auto';
+  document.querySelectorAll('.hud-draggable').forEach(el => el.style.pointerEvents = 'auto');
+}
+
+bindBtn('btn-start-flow-solo', () => { 
   isMpFlow = false; 
   openCharacterSelect(); 
 });
 
-addTouchClick('btn-start-flow-mp', () => { 
+bindBtn('btn-start-flow-mp', () => { 
   isMpFlow = true; 
   hideAllModals(); 
   document.getElementById('mp-options-modal').style.display = 'flex'; 
 });
 
-addTouchClick('btn-create-offer', () => createHostOffer());
-addTouchClick('btn-confirm-host', async () => { 
+bindBtn('btn-create-offer', () => createHostOffer());
+bindBtn('btn-confirm-host', async () => { 
   await connectHost(); 
   openCharacterSelect(); 
 });
-addTouchClick('btn-create-answer', () => { 
+bindBtn('btn-create-answer', () => { 
   createJoinAnswer(openCharacterSelect); 
 });
-addTouchClick('btn-mp-proceed', openCharacterSelect);
+bindBtn('btn-mp-proceed', openCharacterSelect);
 
 let chosenCharId = 'clone'; 
 function openCharacterSelect() {
@@ -122,25 +135,26 @@ function openCharacterSelect() {
     d.className = 'select-card'; 
     d.innerHTML = `<div class="card-icon">${char.icon}</div><div class="card-title" style="color: ${char.color};">${char.name}</div><div class="card-desc">${char.desc}</div>`;
     
-    d.addEventListener('pointerdown', (e) => { 
+    const selectHandler = (e) => { 
       e.stopPropagation();
       document.querySelectorAll('#character-list-container .select-card').forEach(x => x.classList.remove('selected')); 
       d.classList.add('selected'); 
       chosenCharId = char.id;
       setCharacter(char.id);
-    }); 
+    };
+    d.addEventListener('click', selectHandler);
+    d.addEventListener('touchend', selectHandler);
     c.appendChild(d);
   });
   
   if (c.firstChild) {
-    const first = c.firstChild;
-    first.classList.add('selected');
+    c.firstChild.classList.add('selected');
     chosenCharId = Object.values(CHARACTERS_DB)[0].id;
     setCharacter(chosenCharId);
   }
 }
 
-addTouchClick('btn-confirm-character', openWeaponSelect);
+bindBtn('btn-confirm-character', openWeaponSelect);
 
 let chosenWeaponId = 'rifle'; 
 function openWeaponSelect() {
@@ -154,25 +168,26 @@ function openWeaponSelect() {
     d.className = 'select-card'; 
     d.innerHTML = `<div class="card-title" style="color: #f97316;">${wpn.name}</div><div class="card-desc">Dmg: ${wpn.damage}<br>Mag: ${wpn.magSize}<br>Type: ${wpn.id}</div>`;
     
-    d.addEventListener('pointerdown', (e) => { 
+    const selectHandler = (e) => { 
       e.stopPropagation();
       document.querySelectorAll('#weapon-list-container .select-card').forEach(x => x.classList.remove('selected')); 
       d.classList.add('selected'); 
       chosenWeaponId = wpn.id;
       setWeapon(wpn.id);
-    }); 
+    };
+    d.addEventListener('click', selectHandler);
+    d.addEventListener('touchend', selectHandler);
     c.appendChild(d);
   });
   
   if (c.firstChild) {
-    const first = c.firstChild;
-    first.classList.add('selected');
+    c.firstChild.classList.add('selected');
     chosenWeaponId = Object.values(WEAPONS_DB)[0].id;
     setWeapon(chosenWeaponId);
   }
 }
 
-addTouchClick('btn-confirm-weapon', openMapSelect);
+bindBtn('btn-confirm-weapon', openMapSelect);
 
 let chosenMapId = 'maze'; 
 function openMapSelect() {
@@ -187,26 +202,28 @@ function openMapSelect() {
     d.style.flex = '0 0 120px'; 
     d.innerHTML = `<div class="card-title" style="color: #10b981;">${map.name}</div>`;
     
-    d.addEventListener('pointerdown', (e) => { 
+    const selectHandler = (e) => { 
       e.stopPropagation();
       document.querySelectorAll('#map-list-container .select-card').forEach(x => x.classList.remove('selected')); 
       d.classList.add('selected'); 
       chosenMapId = map.id;
       startMapPreview(map.id); 
-    }); 
+    };
+    d.addEventListener('click', selectHandler);
+    d.addEventListener('touchend', selectHandler);
     c.appendChild(d);
   });
   
   if (c.firstChild) {
-    const first = c.firstChild;
-    first.classList.add('selected');
+    c.firstChild.classList.add('selected');
     chosenMapId = Object.values(MAPS_DB)[0].id;
     startMapPreview(chosenMapId);
   }
 }
 
-addTouchClick('btn-confirm-map', () => {
+bindBtn('btn-confirm-map', () => {
   hideAllModals();
+  activateGameplayInput();
   initWorld(chosenMapId); 
   
   if(MAPS_DB[chosenMapId] && MAPS_DB[chosenMapId].spawns) {
@@ -222,219 +239,9 @@ addTouchClick('btn-confirm-map', () => {
   showToast(`نبرد در مپ ${MAPS_DB[chosenMapId].name} آغاز شد!`, '#10b981');
 });
 
-addTouchClick('btn-settings-gear', () => { gameStarted = false; document.getElementById('gear-menu-modal').style.display = 'flex'; });
-addTouchClick('gear-btn-hud-edit', () => { document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; toggleHudEdit(true); });
-addTouchClick('gear-btn-mode', () => { toggleBuildMode(); document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; });
-document.querySelectorAll('.btn-back-menu').forEach(btn => btn.addEventListener('pointerdown', (e) => { e.stopPropagation(); document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); gameStarted = true; }));
-
-const clock = new THREE.Clock(); let netTimer = 0;
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.1);
-  
-  if (!gameStarted) return; 
-
-  updatePlayer(dt, moveInput);
-  
-  if(!isBuildMode) { 
-    updateWeapons(dt); 
-    updateEnemies(dt); 
-    updateCharacters(dt, enemies, { player, scene, camera, enemiesList: enemies }); 
-  }
-  
-  updateBuilder(); 
-  updateNetwork(dt);
-
-  if (isMultiplayer) { 
-    netTimer += dt; 
-    if (netTimer > 0.05) { 
-      sendNetworkData({ t: 'm', x: player.pos.x, y: player.pos.y, z: player.pos.z, ry: player.rotY }); 
-      netTimer = 0; 
-    } 
-  }
-
-  for (let i = activeFlares.length - 1; i >= 0; i--) {
-    const f = activeFlares[i];
-    if (!f.landed) { f.vel.y -= 25 * dt; f.mesh.position.addScaledVector(f.vel, dt); if (f.mesh.position.y <= 0.2) { f.mesh.position.y = 0.2; f.landed = true; playSound(150, 0.2, 'sawtooth', 0.2); } } 
-    else { f.timer -= dt; if (f.timer <= 0) { spawnCarePackageAt(f.mesh.position); scene.remove(f.mesh); activeFlares.splice(i, 1); } }
-  }
-
-  if (activeCrate) {
-    if (!activeCrate.landed) { activeCrate.mesh.position.y -= 12.0 * dt; if (activeCrate.mesh.position.y <= 0.9) { activeCrate.mesh.position.y = 0.9; activeCrate.landed = true; playSound(200, 0.3, 'sawtooth', 0.3); } }
-    else { const dist = player.pos.distanceTo(activeCrate.mesh.position); const promptEl = document.getElementById('crate-prompt'); if (promptEl) promptEl.style.display = (dist < 3.5) ? 'block' : 'none'; }
-  }
-  
-  renderer.render(scene, camera);
-}
-
-animate();
-console.error = (...a) => { oErr(...a); logToDOM(a.map(x => typeof x === 'object' ? safeStringify(x) : x).join(' '), 'err'); };
-window.addEventListener('error', e => logToDOM(`${e.message} at ${e.filename}:${e.lineno}`, 'err'));
-window.addEventListener('unhandledrejection', e => logToDOM(e.reason, 'err'));
-// ==========================================
-
-let gameStarted = false; 
-let isMpFlow = false;
-export const getGameStarted = () => gameStarted;
-
-setAutoDropCallback(spawnAutoDrop);
-
-initEngine(); 
-initControls(getGameStarted, throwCarePackageFlare); 
-initBuilder();
-
-let activeCrate = null; 
-export const activeFlares = []; 
-
-export function throwCarePackageFlare() {
-  const flare = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8), new THREE.MeshStandardMaterial({color: 0xef4444, emissive: 0xff0000}));
-  flare.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1.0));
-  scene.add(flare);
-  const vel = camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(15); vel.y += 5;
-  activeFlares.push({ mesh: flare, vel: vel, timer: 2.5, landed: false }); playSound(350, 0.2, 'sine', 0.4); showToast('🔴 فلر پرتاب شد!', '#ef4444');
-}
-
-export function spawnAutoDrop() { 
-  spawnCarePackageAt(new THREE.Vector3(player.pos.x + (Math.random()-0.5)*8, 45, player.pos.z + (Math.random()-0.5)*8)); 
-}
-
-function spawnCarePackageAt(targetPos) {
-  const crateMesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xb45309 }));
-  crateMesh.position.set(targetPos.x, 45, targetPos.z); scene.add(crateMesh); activeCrate = { mesh: crateMesh, landed: false }; playSound(250, 0.8, 'sawtooth', 0.4); 
-}
-
-document.getElementById('btn-open-crate')?.addEventListener('click', () => {
-  if (!activeCrate) return; 
-  scene.remove(activeCrate.mesh); activeCrate = null; document.getElementById('crate-prompt').style.display = 'none'; playSound(800, 0.4, 'triangle', 0.5);
-  const chosen = ['invincible', 'fire_ammo', 'allies', 'golden_mag'][Math.floor(Math.random() * 4)];
-  if (chosen === 'invincible') { player.invincibleTimer = 20; showToast('🌿 آیتم جان‌سخت: ۲۰ ثانیه آسیب‌ناپذیری!', '#10b981'); } 
-  else if (chosen === 'fire_ammo') { addFireBullets(5); showToast('🔥 آیتم تیر آتشین: ۵ تیر!', '#ef4444'); } 
-  else if (chosen === 'allies') { spawnAlliedSoldiers(); } 
-  else { activateGoldenMag(45); showToast('⚜ خشاب طلایی!', '#facc15'); }
-});
-
-function hideAllModals() { 
-  document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
-}
-
-document.getElementById('btn-start-flow-solo')?.addEventListener('click', () => { 
-  isMpFlow = false; 
-  openCharacterSelect(); 
-});
-
-document.getElementById('btn-start-flow-mp')?.addEventListener('click', () => { 
-  isMpFlow = true; 
-  hideAllModals(); 
-  document.getElementById('mp-options-modal').style.display = 'flex'; 
-});
-
-document.getElementById('btn-create-offer')?.addEventListener('click', createHostOffer);
-document.getElementById('btn-confirm-host')?.addEventListener('click', async () => { 
-  await connectHost(); 
-  openCharacterSelect(); 
-});
-document.getElementById('btn-create-answer')?.addEventListener('click', () => { 
-  createJoinAnswer(openCharacterSelect); 
-});
-document.getElementById('btn-mp-proceed')?.addEventListener('click', openCharacterSelect);
-
-let chosenCharId = 'clone'; 
-function openCharacterSelect() {
-  hideAllModals(); 
-  document.getElementById('character-select-modal').style.display = 'flex';
-  const c = document.getElementById('character-list-container'); 
-  c.innerHTML = '';
-  
-  Object.values(CHARACTERS_DB).forEach(char => {
-    const d = document.createElement('div'); 
-    d.className = 'select-card'; 
-    d.innerHTML = `<div class="card-icon">${char.icon}</div><div class="card-title" style="color: ${char.color};">${char.name}</div><div class="card-desc">${char.desc}</div>`;
-    
-    d.addEventListener('click', () => { 
-      document.querySelectorAll('#character-list-container .select-card').forEach(x => x.classList.remove('selected')); 
-      d.classList.add('selected'); 
-      chosenCharId = char.id;
-      setCharacter(char.id);
-    }); 
-    c.appendChild(d);
-  });
-  
-  if (c.firstChild) c.firstChild.click();
-}
-
-document.getElementById('btn-confirm-character')?.addEventListener('click', openWeaponSelect);
-
-let chosenWeaponId = 'rifle'; 
-function openWeaponSelect() {
-  hideAllModals(); 
-  document.getElementById('weapon-select-modal').style.display = 'flex';
-  const c = document.getElementById('weapon-list-container'); 
-  c.innerHTML = '';
-  
-  Object.values(WEAPONS_DB).forEach(wpn => {
-    const d = document.createElement('div'); 
-    d.className = 'select-card'; 
-    d.innerHTML = `<div class="card-title" style="color: #f97316;">${wpn.name}</div><div class="card-desc">Dmg: ${wpn.damage}<br>Mag: ${wpn.magSize}<br>Type: ${wpn.id}</div>`;
-    
-    d.addEventListener('click', () => { 
-      document.querySelectorAll('#weapon-list-container .select-card').forEach(x => x.classList.remove('selected')); 
-      d.classList.add('selected'); 
-      chosenWeaponId = wpn.id;
-      setWeapon(wpn.id);
-    }); 
-    c.appendChild(d);
-  });
-  
-  if (c.firstChild) c.firstChild.click();
-}
-
-document.getElementById('btn-confirm-weapon')?.addEventListener('click', openMapSelect);
-
-let chosenMapId = 'maze'; 
-function openMapSelect() {
-  hideAllModals(); 
-  document.getElementById('map-select-modal').style.display = 'flex';
-  const c = document.getElementById('map-list-container'); 
-  c.innerHTML = '';
-  
-  Object.values(MAPS_DB).forEach(map => {
-    const d = document.createElement('div'); 
-    d.className = 'select-card'; 
-    d.style.flex = '0 0 120px'; 
-    d.innerHTML = `<div class="card-title" style="color: #10b981;">${map.name}</div>`;
-    
-    d.addEventListener('click', () => { 
-      document.querySelectorAll('#map-list-container .select-card').forEach(x => x.classList.remove('selected')); 
-      d.classList.add('selected'); 
-      chosenMapId = map.id;
-      startMapPreview(map.id); 
-    }); 
-    c.appendChild(d);
-  });
-  
-  if (c.firstChild) c.firstChild.click();
-}
-
-document.getElementById('btn-confirm-map')?.addEventListener('click', () => {
-  hideAllModals();
-  initWorld(chosenMapId); 
-  
-  if(MAPS_DB[chosenMapId] && MAPS_DB[chosenMapId].spawns) {
-    player.pos.copy(MAPS_DB[chosenMapId].spawns[0]); 
-  }
-  if (selectedCharacter && selectedCharacter.id === 'speedster') { 
-    player.baseSpeedMultiplier = 2.5; 
-  }
-  
-  spawnEnemies();
-  gameStarted = true; 
-  console.log("GAME STARTED SUCCESSFULLY. MAP:", MAPS_DB[chosenMapId].name); // تست کنسول دیباگ
-  showToast(`نبرد در مپ ${MAPS_DB[chosenMapId].name} آغاز شد!`, '#10b981');
-});
-
-document.getElementById('btn-settings-gear')?.addEventListener('click', () => { gameStarted = false; document.getElementById('gear-menu-modal').style.display = 'flex'; });
-document.getElementById('gear-btn-hud-edit')?.addEventListener('click', () => { document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; toggleHudEdit(true); });
-document.getElementById('gear-btn-mode')?.addEventListener('click', () => { toggleBuildMode(); document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; });
+bindBtn('btn-settings-gear', () => { gameStarted = false; document.getElementById('gear-menu-modal').style.display = 'flex'; });
+bindBtn('gear-btn-hud-edit', () => { document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; toggleHudEdit(true); });
+bindBtn('gear-btn-mode', () => { toggleBuildMode(); document.getElementById('gear-menu-modal').style.display = 'none'; gameStarted = true; });
 document.querySelectorAll('.btn-back-menu').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); gameStarted = true; }));
 
 const clock = new THREE.Clock(); let netTimer = 0;
@@ -478,3 +285,4 @@ function animate() {
 }
 
 animate();
+                                                                            
