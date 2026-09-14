@@ -8,20 +8,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <style>
-    /* تضمین اولویت تاچ و کلیک روی دکمه‌ها */
     .modal-overlay {
-      display: flex !important;
-      position: fixed !important;
-      inset: 0 !important;
-      background: rgba(0, 0, 0, 0.88) !important;
-      z-index: 999999 !important;
-      align-items: center !important;
-      justify-content: center !important;
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
       pointer-events: auto !important;
     }
     .modal-box {
       pointer-events: auto !important;
-      z-index: 1000000 !important;
+      position: relative;
+      z-index: 100000;
     }
     .btn-primary {
       cursor: pointer !important;
@@ -98,16 +98,16 @@
   <div id="btn-place-block" class="btn-action">🔨</div>
   <div id="btn-break-block" class="btn-action">⛏️</div>
 
-  <!-- منوی ورودی اولیه -->
+  <!-- منوهای مدال بازی -->
   <div id="menu-modal" class="modal-overlay">
     <div class="modal-box">
       <h2 style="color: #38bdf8; margin-bottom: 15px;">🎮 نبرد اکشن سه‌بعدی</h2>
-      <button class="btn-primary btn-success" id="btn-start-flow-solo" onclick="window.startSoloClick && window.startSoloClick()">👤 شروع تک‌نفره</button>
-      <button class="btn-primary" id="btn-start-flow-mp" style="background:#10b981;" onclick="window.startMpClick && window.startMpClick()">🌐 چندنفره</button>
+      <button class="btn-primary btn-success" id="btn-start-flow-solo">👤 شروع تک‌نفره</button>
+      <button class="btn-primary" id="btn-start-flow-mp" style="background:#10b981;">🌐 چندنفره</button>
     </div>
   </div>
 
-  <div id="character-select-modal" class="modal-overlay" style="display: none !important;">
+  <div id="character-select-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box selection-box">
       <h3 style="color: #facc15; margin-bottom: 8px;">🛡️ انتخاب کلاس مبارز</h3>
       <div class="scroll-container" id="character-list-container"></div>
@@ -115,7 +115,7 @@
     </div>
   </div>
 
-  <div id="weapon-select-modal" class="modal-overlay" style="display: none !important;">
+  <div id="weapon-select-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box selection-box">
       <h3 style="color: #f97316; margin-bottom: 8px;">🔫 انتخاب سلاح اصلی</h3>
       <div class="scroll-container" id="weapon-list-container"></div>
@@ -123,7 +123,7 @@
     </div>
   </div>
 
-  <div id="map-select-modal" class="modal-overlay" style="display: none !important;">
+  <div id="map-select-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box selection-box" style="max-width: 95%; width: 480px;">
       <h3 style="color: #10b981; margin-bottom: 8px;">🗺️ انتخاب نقشه</h3>
       <div id="map-preview-container"></div>
@@ -132,7 +132,7 @@
     </div>
   </div>
 
-  <div id="mp-options-modal" class="modal-overlay" style="display: none !important;">
+  <div id="mp-options-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
       <h3 style="color: #10b981;">🌐 اتصال چندنفره WebRTC</h3>
       <button class="btn-primary btn-success" id="btn-create-offer">ساخت اتاق (میزبان)</button>
@@ -147,7 +147,7 @@
     </div>
   </div>
 
-  <div id="gear-menu-modal" class="modal-overlay" style="display: none !important;">
+  <div id="gear-menu-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
       <h3 style="margin-bottom: 15px;">⚙️ تنظیمات نبرد</h3>
       <button class="btn-primary" id="gear-btn-hud-edit" style="background:#8b5cf6;">📐 جابجایی دکمه‌ها</button>
@@ -156,14 +156,12 @@
     </div>
   </div>
 
-  <!-- اسکریپت اصلی بازی -->
-  <script type="module" src="./main.js"></script>
-
-  <!-- بازرس عیب‌یابی در صورت عدم لود فایل main.js -->
   <script>
+    // نمایش مستقیم خطا در صورت بروز مشکل در ماژول‌ها
     window.addEventListener('error', function(e) {
-      alert("خطا در اجرای بازی:\n" + e.message + "\nدر فایل: " + e.filename);
+      alert("خطای جاوااسکریپت:\n" + e.message + "\nدر: " + e.filename + ":" + e.lineno);
     });
   </script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
