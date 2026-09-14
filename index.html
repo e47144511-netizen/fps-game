@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FPS Black Ops - Real Gameplay</title>
+  <title>FPS 3D Web Game</title>
   <link rel="stylesheet" href="./style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -76,10 +76,10 @@
   <div id="btn-place-block" class="btn-action">🔨</div>
   <div id="btn-break-block" class="btn-action">⛏️</div>
 
-  <!-- منوهای بازی -->
+  <!-- منوهای مدال بازی -->
   <div id="menu-modal" class="modal-overlay" style="display: flex;">
     <div class="modal-box">
-      <h2 style="color: #38bdf8; margin-bottom: 12px;">🎮 نبرد اکشن سه‌بعدی</h2>
+      <h2 style="color: #38bdf8; margin-bottom: 15px;">🎮 نبرد اکشن سه‌بعدی</h2>
       <button class="btn-primary btn-success" id="btn-start-flow-solo">👤 شروع تک‌نفره</button>
       <button class="btn-primary" id="btn-start-flow-mp" style="background:#10b981;">🌐 چندنفره</button>
     </div>
@@ -87,7 +87,7 @@
 
   <div id="character-select-modal" class="modal-overlay">
     <div class="modal-box selection-box">
-      <h3 style="color: #facc15;">🛡️ انتخاب کلاس مبارز</h3>
+      <h3 style="color: #facc15; margin-bottom: 8px;">🛡️ انتخاب کلاس مبارز</h3>
       <div class="scroll-container" id="character-list-container"></div>
       <button class="btn-primary btn-next" id="btn-confirm-character">تایید کاراکتر ➔</button>
     </div>
@@ -95,46 +95,45 @@
 
   <div id="weapon-select-modal" class="modal-overlay">
     <div class="modal-box selection-box">
-      <h3 style="color: #f97316;">🔫 انتخاب سلاح اصلی</h3>
+      <h3 style="color: #f97316; margin-bottom: 8px;">🔫 انتخاب سلاح اصلی</h3>
       <div class="scroll-container" id="weapon-list-container"></div>
       <button class="btn-primary btn-next" id="btn-confirm-weapon">تایید سلاح ➔</button>
     </div>
   </div>
 
   <div id="map-select-modal" class="modal-overlay">
-    <div class="modal-box selection-box" style="max-width: 95%; width: 500px;">
-      <h3 style="color: #10b981;">🗺️ انتخاب نقشه</h3>
+    <div class="modal-box selection-box" style="max-width: 95%; width: 480px;">
+      <h3 style="color: #10b981; margin-bottom: 8px;">🗺️ انتخاب نقشه</h3>
       <div id="map-preview-container"></div>
-      <div class="scroll-container" id="map-list-container" style="height: 100px;"></div>
+      <div class="scroll-container" id="map-list-container" style="height: 90px;"></div>
       <button class="btn-primary btn-next" id="btn-confirm-map">🚀 شروع نبرد!</button>
     </div>
   </div>
 
   <div id="mp-options-modal" class="modal-overlay">
     <div class="modal-box">
-      <h3 style="color: #10b981;">🌐 اتصال چندنفره</h3>
+      <h3 style="color: #10b981;">🌐 اتصال چندنفره WebRTC</h3>
       <button class="btn-primary btn-success" id="btn-create-offer">ساخت اتاق (میزبان)</button>
-      <textarea id="host-offer-text" readonly placeholder="کد تولید شده..."></textarea>
-      <textarea id="host-answer-input" placeholder="کد جواب دوستتان"></textarea>
-      <button class="btn-primary" id="btn-confirm-host">تایید میزبان</button>
-      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
-      <textarea id="join-offer-input" placeholder="کد دوستتان (مهمان)"></textarea>
-      <button class="btn-primary btn-danger" id="btn-create-answer">تولید کد پاسخ</button>
-      <textarea id="join-answer-text" readonly placeholder="این کد را به دوستتان بدهید"></textarea>
-      <button class="btn-primary btn-next" id="btn-mp-proceed">ورود به بازی ➔</button>
+      <textarea id="host-offer-text" readonly placeholder="کد تولید شده هاست..."></textarea>
+      <textarea id="host-answer-input" placeholder="کد پاسخ مهمان را اینجا پیست کنید"></textarea>
+      <button class="btn-primary" id="btn-confirm-host">تایید و اتصال میزبان</button>
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.15); margin: 10px 0;">
+      <textarea id="join-offer-input" placeholder="کد اتاق میزبان را اینجا پیست کنید"></textarea>
+      <button class="btn-primary btn-danger" id="btn-create-answer">تولید کد پاسخ (مهمان)</button>
+      <textarea id="join-answer-text" readonly placeholder="کد تولید شده را به میزبان بفرستید"></textarea>
+      <button class="btn-primary btn-next" id="btn-mp-proceed">ورود به مرحله بعد ➔</button>
     </div>
   </div>
 
   <div id="gear-menu-modal" class="modal-overlay">
     <div class="modal-box">
-      <h3 style="margin-bottom: 15px;">⚙️ تنظیمات</h3>
+      <h3 style="margin-bottom: 15px;">⚙️ تنظیمات نبرد</h3>
       <button class="btn-primary" id="gear-btn-hud-edit" style="background:#8b5cf6;">📐 جابجایی دکمه‌ها</button>
       <button class="btn-primary" id="gear-btn-mode">🛠️ حالت ساخت/مبارزه</button>
       <button class="btn-primary btn-back-menu" style="background:#475569;">بازگشت به بازی</button>
     </div>
   </div>
 
-  <!-- اصلاح مسیر بارگذاری اسکریپت -->
   <script type="module" src="./main.js"></script>
 </body>
 </html>
