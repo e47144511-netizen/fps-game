@@ -59,7 +59,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #060
 #btn-place-block { display: none; position: absolute; bottom: 20px; left: 20px; width: 62px; height: 62px; background: radial-gradient(circle, #0284c7 0%, #0369a1 100%); border-radius: 50%; font-size: 24px; border: 2px solid #fff; color: white; align-items: center; justify-content: center; z-index: 60; cursor: pointer;}
 #btn-break-block { display: none; position: absolute; bottom: 20px; left: 95px; width: 50px; height: 50px; background: radial-gradient(circle, #ef4444 0%, #b91c1c 100%); border-radius: 50%; font-size: 18px; border: 2px solid #fff; color: white; align-items: center; justify-content: center; z-index: 60; cursor: pointer;}
 
-/* لایه‌های منو با دسترسی کامل */
+/* لایه‌های منو با اولویت تاچ */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; direction: rtl; pointer-events: auto !important; }
 .modal-box { width: 90%; max-width: 380px; background: #0f172a; border: 2px solid #38bdf8; border-radius: 16px; padding: 16px; color: white; text-align: center; pointer-events: auto !important; position: relative; z-index: 10000; }
 
@@ -80,4 +80,4 @@ html, body { width: 100%; height: 100%; overflow: hidden; background-color: #060
 .btn-success { background: #10b981; }
 .btn-danger { background: #ef4444; }
 textarea { width: 100%; height: 55px; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 8px; padding: 6px; font-size: 10px; margin: 6px 0; outline: none; resize: none; direction: ltr; pointer-events: auto !important; }
-      
+             
