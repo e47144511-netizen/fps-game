@@ -19,7 +19,7 @@ import {
 import { CHARACTERS_DB, setCharacter, selectedCharacter, updateCharacters } from './characters.js';
 import { MAPS_DB, startMapPreview, currentMapId } from './maps.js';
 
-// لاگ هوشمند برای دیدن وضعیت در صفحه بازی
+// ترمینال دیباگ روی تصویر
 const dbgConsole = document.getElementById('debug-console');
 const dbgContent = document.getElementById('debug-content');
 document.getElementById('debug-header')?.addEventListener('click', () => {
@@ -59,7 +59,7 @@ export const getGameStarted = () => gameStarted;
 let activeCrate = null; 
 export const activeFlares = []; 
 
-// تعریف توابع فلر و دراپ قبل از مقداردهی اولیه کنترل‌ها
+// تعریف صحیح توابع قبل از پاس دادن به ماژول‌های کنترل
 export function spawnCarePackageAt(targetPos) {
   const crateMesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.8), new THREE.MeshStandardMaterial({ color: 0xb45309 }));
   crateMesh.position.set(targetPos.x, 45, targetPos.z); 
@@ -80,7 +80,7 @@ export function throwCarePackageFlare() {
   vel.y += 5;
   activeFlares.push({ mesh: flare, vel: vel, timer: 2.5, landed: false }); 
   playSound(350, 0.2, 'sine', 0.4); 
-  showToast('🔴 فلر پرتاب شد!', '#ef4444');
+  showToast('🔴 فلر پرتاب شد!', '#ef4444'); 
 }
 
 setAutoDropCallback(spawnAutoDrop);
@@ -113,7 +113,18 @@ function hideAllModals() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); 
 }
 
-function bindSafeClick(id, handler) {
+function enableGameControls() {
+  const lookZone = document.getElementById('touch-look-zone');
+  const joyZone = document.getElementById('joystick-zone');
+  const canvas = document.getElementById('canvas-container');
+  if (lookZone) lookZone.style.pointerEvents = 'auto';
+  if (joyZone) joyZone.style.pointerEvents = 'auto';
+  if (canvas) canvas.style.pointerEvents = 'auto';
+  document.querySelectorAll('.hud-draggable').forEach(el => el.style.pointerEvents = 'auto');
+}
+
+// ثبت رویداد با ایمنی لمس روی صفحات موبایل
+function addSafeClick(id, handler) {
   const el = document.getElementById(id);
   if (!el) return;
   const cb = (e) => {
@@ -125,35 +136,35 @@ function bindSafeClick(id, handler) {
   el.addEventListener('click', cb);
 }
 
-// دکمه‌های صفحه ورودی اولیه
-bindSafeClick('btn-start-flow-solo', () => { 
+// منوی اصلی
+addSafeClick('btn-start-flow-solo', () => { 
   isMpFlow = false; 
   openCharacterSelect(); 
 });
 
-bindSafeClick('btn-start-flow-mp', () => { 
+addSafeClick('btn-start-flow-mp', () => { 
   isMpFlow = true; 
   hideAllModals(); 
   document.getElementById('mp-options-modal').style.display = 'flex'; 
 });
 
-// دکمه‌های شبکه / چندنفره
-bindSafeClick('btn-create-offer', () => {
+// منوی شبکه
+addSafeClick('btn-create-offer', () => {
   createHostOffer();
 });
 
-bindSafeClick('btn-confirm-host', async () => { 
+addSafeClick('btn-confirm-host', async () => { 
   await connectHost(); 
   openCharacterSelect(); 
 });
 
-bindSafeClick('btn-create-answer', () => { 
+addSafeClick('btn-create-answer', () => { 
   createJoinAnswer(() => {
     openCharacterSelect();
   }); 
 });
 
-bindSafeClick('btn-mp-proceed', () => {
+addSafeClick('btn-mp-proceed', () => {
   openCharacterSelect();
 });
 
@@ -188,7 +199,7 @@ function openCharacterSelect() {
   }
 }
 
-bindSafeClick('btn-confirm-character', openWeaponSelect);
+addSafeClick('btn-confirm-character', openWeaponSelect);
 
 let chosenWeaponId = 'rifle'; 
 function openWeaponSelect() {
@@ -221,7 +232,7 @@ function openWeaponSelect() {
   }
 }
 
-bindSafeClick('btn-confirm-weapon', () => {
+addSafeClick('btn-confirm-weapon', () => {
   if (isMpFlow && !isHost) {
     startGameSession();
   } else {
@@ -263,6 +274,7 @@ function openMapSelect() {
 
 function startGameSession() {
   hideAllModals();
+  enableGameControls();
   initWorld(chosenMapId); 
   
   if (MAPS_DB[chosenMapId] && MAPS_DB[chosenMapId].spawns) {
@@ -290,20 +302,20 @@ function startGameSession() {
   showToast(`نبرد در نقشه ${MAPS_DB[chosenMapId]?.name || chosenMapId} آغاز شد!`, '#10b981');
 }
 
-bindSafeClick('btn-confirm-map', startGameSession);
+addSafeClick('btn-confirm-map', startGameSession);
 
-bindSafeClick('btn-settings-gear', () => { 
+addSafeClick('btn-settings-gear', () => { 
   gameStarted = false; 
   document.getElementById('gear-menu-modal').style.display = 'flex'; 
 });
 
-bindSafeClick('gear-btn-hud-edit', () => { 
+addSafeClick('gear-btn-hud-edit', () => { 
   document.getElementById('gear-menu-modal').style.display = 'none'; 
   gameStarted = true; 
   toggleHudEdit(true); 
 });
 
-bindSafeClick('gear-btn-mode', () => { 
+addSafeClick('gear-btn-mode', () => { 
   toggleBuildMode(); 
   document.getElementById('gear-menu-modal').style.display = 'none'; 
   gameStarted = true; 
@@ -392,3 +404,4 @@ function animate() {
 }
 
 animate();
+      
